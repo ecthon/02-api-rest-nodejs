@@ -7,7 +7,9 @@ const app = fastify()
 // Como os plugins no Fastify tem ordem de prioridade, é importante que sejam
 // colocados abaixo de forma adequada.
 // PLUGINS
-app.register(transactionsRoutes)
+app.register(transactionsRoutes, {
+  prefix: 'transactions',
+})
 
 //
 
