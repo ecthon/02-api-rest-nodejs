@@ -1,16 +1,15 @@
 import fastify from 'fastify'
-import { knex } from './database'
 import { env } from './env'
+import { transactionsRoutes } from './routes/transactions'
 
 const app = fastify()
 
-app.get('/hello', async () => {
-  const transactions = await knex('transactions')
-    .where('amount', 1000)
-    .select('*')
+// Como os plugins no Fastify tem ordem de prioridade, é importante que sejam
+// colocados abaixo de forma adequada.
+// PLUGINS
+app.register(transactionsRoutes)
 
-  return transactions
-})
+//
 
 app
   .listen({
