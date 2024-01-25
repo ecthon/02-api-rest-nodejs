@@ -2,34 +2,66 @@ import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { knex } from '../database'
 import { randomUUID } from 'crypto'
+import { checkSessionIdExist } from '../middlewares/check-session-id-exist'
 
 export async function transactionsRoutes(app: FastifyInstance) {
   // List all transactions
-  app.get('/', async () => {
-    const transactions = await knex('transactions').select()
+  app.get(
+    '/',
+    {
+      preHandler: [checkSessionIdExist],
+    },
+    async (request) => {
+      const { sessionId } = request.cookies
 
-    return { transactions }
-  })
+      const transactions = await knex('transactions')
+        .where('session_id', sessionId)
+        .select()
+
+      return { transactions }
+    },
+  )
 
   // Get unique transaction
-  app.get('/:id', async (request) => {
-    const getTransactionParamsSchema = z.object({
-      id: z.string().uuid(),
-    })
+  app.get(
+    '/:id',
+    {
+      preHandler: [checkSessionIdExist],
+    },
+    async (request) => {
+      const getTransactionParamsSchema = z.object({
+        id: z.string().uuid(),
+      })
 
-    const { id } = getTransactionParamsSchema.parse(request.params)
-    const transaction = await knex('transactions').where('id', id).first()
+      const { id } = getTransactionParamsSchema.parse(request.params)
+      const { sessionId } = request.cookies
+      const transaction = await knex('transactions')
+        .where({
+          session_id: sessionId,
+          id,
+        })
+        .first()
 
-    return { transaction }
-  })
+      return { transaction }
+    },
+  )
 
   // Get summary
-  app.get('/summary', async () => {
-    const summary = await knex('transactions')
-      .sum('amount', { as: 'amount' })
-      .first()
-    return { summary }
-  })
+  app.get(
+    '/summary',
+    {
+      preHandler: [checkSessionIdExist],
+    },
+    async (request) => {
+      const { sessionId } = request.cookies
+
+      const summary = await knex('transactions')
+        .where('session_id', sessionId)
+        .sum('amount', { as: 'amount' })
+        .first()
+      return { summary }
+    },
+  )
 
   // Create transaction
   app.post('/', async (request, replay) => {
