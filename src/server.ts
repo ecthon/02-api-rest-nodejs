@@ -7,6 +7,10 @@ import { transactionsRoutes } from './routes/transactions'
 const app = fastify()
 app.register(cookie)
 
+app.addHook('preHandler', async (request) => {
+  console.log(`[${request.method}] [${request.url}]`)
+})
+
 // Como os plugins no Fastify tem ordem de prioridade, é importante que sejam
 // colocados abaixo de forma adequada.
 // PLUGINS
